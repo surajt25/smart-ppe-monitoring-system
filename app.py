@@ -14,15 +14,24 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title(" Smart PPE Monitoring System")
+st.title("Smart PPE Monitoring System")
 
 st.markdown(
     """
-    Real-time PPE Detection using YOLOv8 and OpenCV
+     Detect helmets, safety vests, and masks using a custom-trained YOLOv8 model.
     """
 )
 
-st.sidebar.header("Detection Settings")
+st.divider()
+st.markdown("<br>", unsafe_allow_html=True)
+
+st.sidebar.title("⚙️ Settings")
+
+st.sidebar.markdown(
+    """
+    Configure detection parameters.
+    """
+)
 
 confidence = st.sidebar.slider(
     "Confidence Threshold",
@@ -53,24 +62,54 @@ if mode == "Image Upload":
 
         image_np = np.array(image)
 
-        detected_image = run_detection(
-            model,
-            image_np,
-            confidence
-        )
+        with st.spinner("Running PPE detection..."):
 
-        st.subheader("Detection Result")
+            detected_image, detection_counts = run_detection(
+                model,
+                image_np,
+                confidence
+            )
 
-        st.image(
-            detected_image,
-            channels="RGB",
-            use_container_width=True
-        )   
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            st.subheader("Original Image")
+
+            st.image(
+                image,
+                use_container_width=True
+            )
+
+        with col2:
+
+            st.subheader("Detection Result")
+
+            st.image(
+                detected_image,
+                channels="RGB",
+                use_container_width=True
+            )
+
+        st.success("Detection completed successfully.")
+        st.subheader("Detection Statistics")
+
+        stats_cols = st.columns(3)
+
+        for idx, (label, count) in enumerate(detection_counts.items()):
+
+            with stats_cols[idx]:
+
+                st.metric(
+                    label=label.capitalize(),
+                    value=count
+                )
 
 elif mode == "Video Upload":
+    st.subheader("📹 PPE Video Detection")
 
     uploaded_video = st.file_uploader(
-        "Upload a Video",
+        "Upload PPE Monitoring Video",
         type=["mp4", "avi", "mov"]
     )
 
@@ -80,9 +119,21 @@ elif mode == "Video Upload":
 
         tfile.write(uploaded_video.read())
 
+        status_message = st.empty()
+
+        status_message.info("Initializing video processing...")
+
         cap = cv2.VideoCapture(tfile.name)
 
+        status_message.empty()
+
         stframe = st.empty()
+        
+        video_info = st.empty()
+        video_info.info(
+            "Video processing may take a few moments depending on video size."
+        )
+        
 
         while cap.isOpened():
 
@@ -91,7 +142,7 @@ elif mode == "Video Upload":
             if not ret:
                 break
 
-            detected_frame = run_detection(
+            detected_frame, detection_counts = run_detection(
                 model,
                 frame,
                 confidence
@@ -100,7 +151,9 @@ elif mode == "Video Upload":
             stframe.image(
                 detected_frame,
                 channels="BGR",
-                use_container_width=True
+                width="stretch"
             )
 
         cap.release()
+        video_info.empty()  
+        st.success("Video processing completed successfully.")
