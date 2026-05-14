@@ -13,7 +13,11 @@ while True:
     if not ret:
         break
 
-    output_frame, results = run_detection(model, frame)
+    output_frame = run_detection(
+        model,
+        frame,
+        conf_threshold=0.7
+    )
 
     cv2.imshow("PPE Detection", output_frame)
 
