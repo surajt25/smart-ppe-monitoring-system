@@ -5,10 +5,10 @@ os.environ["MLFLOW_TRACKING_URI"] = "file:./mlruns"
 
 def main():
 
-    #Loading pre-trained model
+    # loading pre-trained model
     model = YOLO("yolov8n.pt")
 
-    #Training the model 
+    # training model 
     model.train(
         data="data/data.yaml",
         epochs=50,

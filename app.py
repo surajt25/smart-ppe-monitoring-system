@@ -1,28 +1,32 @@
-import cv2
+import streamlit as st
 
-from models.yolo_model import load_model
-from utils.detector import run_detection
+st.set_page_config(
+    page_title="Smart PPE Monitoring System",
+    layout="wide"
+)
 
-model = load_model()
+st.title(" Smart PPE Monitoring System")
 
-cap = cv2.VideoCapture(0)
+st.markdown(
+    """
+    Real-time PPE Detection using YOLOv8 and OpenCV
+    """
+)
 
-while True:
-    ret, frame = cap.read()
+st.sidebar.header("Detection Settings")
 
-    if not ret:
-        break
+confidence = st.sidebar.slider(
+    "Confidence Threshold",
+    min_value=0.0,
+    max_value=1.0,
+    value=0.7,
+    step=0.05
+)
 
-    output_frame = run_detection(
-        model,
-        frame,
-        conf_threshold=0.7
-    )
+mode = st.sidebar.selectbox(
+    "Select Input Type",
+    ["Image Upload", "Video Upload"]
+)
 
-    cv2.imshow("PPE Detection", output_frame)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cap.release()
-cv2.destroyAllWindows()
+st.write("Selected Mode :", mode)
+st.write("Confidence Threshold :", confidence)
