@@ -9,6 +9,8 @@ mlruns/
 
 *.pyc
 
-data
+data/
+
+snapshots/
 
 temp/

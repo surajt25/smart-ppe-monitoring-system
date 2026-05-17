@@ -40,12 +40,28 @@ confidence = st.sidebar.slider(
     step=0.05
 )
 
+DEPLOYMENT_MODE = True
+
+if DEPLOYMENT_MODE:
+    input_modes = ["Image Upload", "Video Upload"]
+    
+else:
+    input_modes = ["Image Upload", "Video Upload", "Real-Time Webcam"]
+
+
 mode = st.sidebar.selectbox(
     "Select Input Type",
-    ["Image Upload", "Video Upload", "Real-Time Webcam"]
+    input_modes
 )
 
-model = load_model()
+# model = load_model()
+
+@st.cache_resource
+def get_model():
+    return load_model()
+
+model = get_model()
+
 
 if mode == "Image Upload":
 
@@ -173,6 +189,7 @@ elif mode == "Video Upload":
             )
 
         cap.release()
+        tfile.close()
         video_info.empty()  
         st.success("Video processing completed successfully.")
         
