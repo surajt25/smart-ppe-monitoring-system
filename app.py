@@ -5,7 +5,6 @@ import cv2
 import numpy as np
 
 from PIL import Image
-
 from models.yolo_model import load_model
 from utils.detector import run_detection
 
@@ -43,9 +42,8 @@ confidence = st.sidebar.slider(
 
 mode = st.sidebar.selectbox(
     "Select Input Type",
-    ["Image Upload", "Video Upload"]
+    ["Image Upload", "Video Upload", "Real-Time Webcam"]
 )
-
 
 model = load_model()
 
@@ -106,7 +104,7 @@ if mode == "Image Upload":
                 )
 
 elif mode == "Video Upload":
-    st.subheader("📹 PPE Video Detection")
+    st.subheader("PPE Video Detection")
 
     uploaded_video = st.file_uploader(
         "Upload PPE Monitoring Video",
@@ -129,12 +127,13 @@ elif mode == "Video Upload":
 
         stframe = st.empty()
         
+        stats_placeholder = st.empty()
+        
         video_info = st.empty()
         video_info.info(
             "Video processing may take a few moments depending on video size."
         )
         
-
         while cap.isOpened():
 
             ret, frame = cap.read()
@@ -147,7 +146,26 @@ elif mode == "Video Upload":
                 frame,
                 confidence
             )
+            
+            with stats_placeholder.container():
 
+                st.subheader("Live Detection Statistics")
+
+                stats_cols = st.columns(3)
+
+                class_names = ["helmet", "vest", "mask"]
+
+                for idx, class_name in enumerate(class_names):
+
+                    count = detection_counts.get(class_name, 0)
+
+                    with stats_cols[idx]:
+
+                        st.metric(
+                            label=class_name.capitalize(),
+                            value=count
+                        )
+            
             stframe.image(
                 detected_frame,
                 channels="BGR",
@@ -157,3 +175,63 @@ elif mode == "Video Upload":
         cap.release()
         video_info.empty()  
         st.success("Video processing completed successfully.")
+        
+elif mode == "Real-Time Webcam":
+
+    st.subheader("Real-Time PPE Detection")
+
+    start_webcam = st.button("Start Webcam")
+
+    stop_webcam = st.button("Stop Webcam")
+
+    webcam_placeholder = st.empty()
+    
+    webcam_stats_placeholder = st.empty()
+
+    if start_webcam:
+
+        cap = cv2.VideoCapture(0)
+
+        while cap.isOpened():
+
+            ret, frame = cap.read()
+
+            if not ret:
+                st.error("Failed to access webcam.")
+                break
+
+            detected_frame, detection_counts = run_detection(
+                model,
+                frame,
+                confidence
+            )
+            
+            with webcam_stats_placeholder.container():
+
+                st.subheader("Live Detection Statistics")
+
+                stats_cols = st.columns(3)
+
+                class_names = ["helmet", "vest", "mask"]
+
+                for idx, class_name in enumerate(class_names):
+
+                    count = detection_counts.get(class_name, 0)
+
+                    with stats_cols[idx]:
+
+                        st.metric(
+                            label=class_name.capitalize(),
+                            value=count
+                        )
+
+            webcam_placeholder.image(
+                detected_frame,
+                channels="BGR",
+                use_container_width=True
+            )
+
+            if stop_webcam:
+                break
+
+        cap.release()

@@ -2,6 +2,8 @@ import cv2
 
 def run_detection(model, frame, conf_threshold):
 
+    frame = cv2.resize(frame, (640, 480))
+    
     results = model(frame)
 
     annotated_frame = frame.copy()
